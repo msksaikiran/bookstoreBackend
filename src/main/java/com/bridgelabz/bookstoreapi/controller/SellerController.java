@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,41 +55,50 @@ public class SellerController {
 	 * @return
 	 * @throws Exception
 	 */
-	@PostMapping("/Registration")
+	@PostMapping("/registration")
 	public ResponseEntity<SellerResponse> registration(@RequestBody RegisterDto sellerRegistrationDto) throws Exception {
-		System.out.println(sellerRegistrationDto.getEmailAddress());
-		boolean reg = sellerService.sellerRegistration(sellerRegistrationDto);
-		if (reg) {
+		Seller seller = sellerService.sellerRegistration(sellerRegistrationDto);
+		if (seller!=null) {
 			return ResponseEntity.status(HttpStatus.CREATED)
-					.body(new SellerResponse(environment.getProperty("201"), 201, sellerRegistrationDto));
+					.body(new SellerResponse(environment.getProperty("200"), 201, sellerRegistrationDto));
 		}
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 				.body(new SellerResponse(environment.getProperty("400"), 400, sellerRegistrationDto));
 	}
 	/**
-	 *  Api for Registration 
-	 *  @RequestBody-UserLoginDetails
+	 * Api for Registration
+	 * @param sellerLoginDto
+	 * @return token
 	 */
-	@PostMapping("/Login")
-	public ResponseEntity<SellerResponse> sellerLogin(@RequestBody LoginDTO sellerLoginDto) {
-		System.out.println("Enter into login api");
+	@PostMapping("/login")
+	public ResponseEntity<Response> sellerLogin(@RequestBody LoginDTO sellerLoginDto) {
 		String token = sellerService.loginByEmailOrMobile(sellerLoginDto);
 		if (token!= null) {
-			SellerResponse sellr = new SellerResponse( environment.getProperty("202"),200,token);
-			return new ResponseEntity<>(sellr,HttpStatus.OK);
-			
+			Response response = new Response(HttpStatus.OK.value(),"User loggedin successfully", token);
+			System.out.println("token"+response.getStatus());
+			return new ResponseEntity<>(response, HttpStatus.OK);
 		}
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new SellerResponse(environment.getProperty("104"), 404, token));
-	}
+		return null;
+		}
+	/**
+	 * 
+	 * @param email
+	 * @return link
+	 */
 	@PostMapping("/forgetPassword")
-	public ResponseEntity<SellerResponse> forgetPassword(@Valid @RequestParam String emailAddress) {
-		String message = sellerService.forgotpassword(emailAddress);
+	public ResponseEntity<SellerResponse> forgetPassword(@Valid @RequestParam String email) {
+		String message = sellerService.forgotpassword(email);
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.body(new SellerResponse(environment.getProperty("201"), 201, message));
 	}
-
-	@PostMapping("/restPassword/{token}")
-	public ResponseEntity<SellerResponse> restpassword(@Valid @RequestHeader String token,
+	/**
+	 * 
+	 * @param token
+	 * @param forgetPasswordDto
+	 * @return message
+	 */
+	@PutMapping("/resetPassword/{token}")
+	public ResponseEntity<SellerResponse> restpassword(@Valid @PathVariable String token,
 			@RequestBody sellerForgetPasswordDto forgetPasswordDto) {
 		String messege = sellerService.resetpassword(token, forgetPasswordDto);
 		return ResponseEntity.status(HttpStatus.CREATED)
@@ -109,17 +119,16 @@ public class SellerController {
 	 * @return
 	 * @throws Exception
 	 */
-
 	@GetMapping("/singleSeller")
 	public ResponseEntity<SellerResponse> singleUser(@RequestHeader("token") String token) throws Exception {
 		Seller user = sellerService.getSingleUser(token);
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(new SellerResponse(environment.getProperty("201"), 202, user));
 	}
-	
+
 	@ApiOperation(value = "Verifing the user",response = Iterable.class)
 	@GetMapping(value = "/registration/verify/{token}")
 	public ResponseEntity<SellerResponse> sellerVerify(@PathVariable("token") String token) throws Exception {
-		
+
 		boolean verification = sellerService.updateVerificationStatus(token);
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.body(new SellerResponse(environment.getProperty("308"), 201, verification));

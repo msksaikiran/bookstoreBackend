@@ -38,10 +38,11 @@ public class AddressServiceImpl implements AddressService{
 	@Override
 	public Address addAddress(AddressDto address,String token) {
 		Long uId = jwt.decodeToken(token);
-		Address add=new Address();
+		Address add=new Address( address);
+		System.out.println(add.getAddress()+"->"+add.getCity());
 		User userdetails = userRepository.findById(uId)
 				.orElseThrow(()->new UserException(400, env.getProperty("104")));
-		BeanUtils.copyProperties(address,add);
+//		BeanUtils.copyProperties(address,Address.class);
 		userdetails.getAddress().add(add);
 		return   addressRepository.save(add);
 
@@ -80,11 +81,10 @@ public class AddressServiceImpl implements AddressService{
 			add.setType(addressupdate.getType());
 			add.setCity(addressupdate.getCity());
 			add.setCountry(addressupdate.getCountry());
-			add.setHouseNo(addressupdate.getHouseNo());
 			add.setLandmark(addressupdate.getLandmark());
 			add.setPincode(addressupdate.getPincode());
 			add.setState(addressupdate.getState());
-			add.setStreet(addressupdate.getStreet());
+			
 			addressRepository.save(add);
 			userdetails.getAddress().add(add);
 			return ad;
@@ -118,6 +118,14 @@ public class AddressServiceImpl implements AddressService{
 			e.printStackTrace();
 		}
 		return null;
+	}
+	@Override
+	public Address getAddress(String home,String token) {
+		Long uId = jwt.decodeToken(token);
+		User userdetails = userRepository.findById(uId)
+				.orElseThrow(()->new UserException(400, env.getProperty("104")));
+		Address add=addressRepository.findAddressBytext(uId,home);
+		return add;
 	}
 }
 

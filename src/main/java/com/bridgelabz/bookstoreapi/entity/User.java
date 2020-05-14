@@ -36,7 +36,7 @@ public class User {
 	@Column(name = "user_name", nullable = false)
 	private String name;
 	
-	@Column(name = "user_email", nullable = false)
+	@Column(name = "email", nullable = false)
 	private String email;
 	
 	@Column(name = "password", nullable = false)
@@ -74,7 +74,7 @@ public class User {
 
 	public User(RegisterDto register) {
 		this.name = register.getName();
-		this.email = register.getEmailAddress();
+		this.email = register.getEmail();
 		this.mobileNum = register.getMobile();
 		this.password = register.getPassword();
 		this.createTime = LocalDateTime.now();

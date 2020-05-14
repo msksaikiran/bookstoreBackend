@@ -9,48 +9,63 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.GenericGenerator;
 
+import com.bridgelabz.bookstoreapi.dto.AddressDto;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Entity
-@Table(name="address")
+@Table(name = "address")
 @Data
-@NoArgsConstructor
 @ToString
 public class Address {
 
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private long addressId;
-	
-	@Column(name = "address", nullable = false)
+	private Long addressId;
+	@Column
 	private String address;
-	
-	@Column(name = "house_no", nullable = false)
-	private String houseNo;
-	
-	@Column(name = "street", nullable = false)
-	private String street;
-	
-	@Column(name = "city", nullable = false)
+	@Column
+	private String locality;
+	@Column
+	private String name;
+	@Column
 	private String city;
-	
-	@Column(name = "landmark", nullable = false)
+	@Column
 	private String landmark;
-	
-	@Column(name = "state", nullable = false)
+	@Column
 	private String state;
-	
-	@Column(name = "pincode", nullable = false)
+	@Column
 	private String pincode;
-	
-	@Column(name = "country", nullable = false)
+	@Column
 	private String country;
-
-	@Column(name = "type")
+	@Column
 	private String type;
+	@Column
+	private String phoneNumber;
 	
+	public Address() {
+		super();
+	}
+
+	public Address(AddressDto address2) {
+	this.name=address2.getName();
+	this.phoneNumber=address2.getPhoneNumber();
+	this.landmark=address2.getLandmark();
+	this.type=address2.getType();
+	this.pincode=address2.getPincode();
+	this.state=address2.getState();
+	this.country=address2.getCountry();
+	this.address=address2.getAddress();
+	this.locality=address2.getLocality();
+	}
+
+	public String getAddress() {
+		return address;
+	}
+
 	public Long getAddressId() {
 		return addressId;
 	}
@@ -59,28 +74,24 @@ public class Address {
 		this.addressId = addressId;
 	}
 
-	public String getAddress() {
-		return address;
-	}
-
 	public void setAddress(String address) {
 		this.address = address;
 	}
 
-	public String getHouseNo() {
-		return houseNo;
+	public String getLocality() {
+		return locality;
 	}
 
-	public void setHouseNo(String houseNo) {
-		this.houseNo = houseNo;
+	public void setLocality(String locality) {
+		this.locality = locality;
 	}
 
-	public String getStreet() {
-		return street;
+	public String getName() {
+		return name;
 	}
 
-	public void setStreet(String street) {
-		this.street = street;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public String getCity() {
@@ -130,6 +141,13 @@ public class Address {
 	public void setType(String type) {
 		this.type = type;
 	}
-	
-	
+
+	public String getPhoneNumber() {
+		return phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
 }

@@ -30,7 +30,7 @@ import io.swagger.annotations.ApiOperation;
 
 @RestController
 @RequestMapping("/book")
-@CrossOrigin
+@CrossOrigin("*")
 @Api(value="Book_Details", description="Operations pertaining to store book details")
 @PropertySource("classpath:message.properties")
 public class BookController {
@@ -45,7 +45,7 @@ public class BookController {
 	private Environment env;
 	
 	@ApiOperation(value = "Add a Book Details")
-	@PostMapping("/add")
+	@PostMapping("/addbook")
 	public ResponseEntity<Response> addBook(@RequestBody BookDTO bookDTO,@RequestHeader(name="token") String token){
 		bookService.addBook(bookDTO, token);
 		return ResponseEntity.ok().body(new Response(HttpStatus.OK.value(),env.getProperty("2001")));
@@ -115,6 +115,10 @@ public class BookController {
 		awsService.uploadFileToS3Bucket(file,token, bookId ,ImageType.BOOK);
         return ResponseEntity.ok().body(new Response(HttpStatus.OK.value(),"file [" + file.getOriginalFilename() + "] uploading request submitted successfully."));
     }
-	
+	@ApiOperation(value = "Get verified Book Details")
+	@GetMapping("/getBooksCount")
+	public ResponseEntity<Response> getBooksCount(@RequestParam Integer pageNo){
+		return ResponseEntity.ok().body(new Response(HttpStatus.OK.value(),env.getProperty("3001"), bookService.getBooks(pageNo)));
+	}
 	
 }

@@ -57,25 +57,21 @@ public class UserServiceImpl implements UserService {
 
 	/**
 	 * Saves the user details
-	 * 
 	 * @return
 	 */
-	@Transactional
+	//@Transactional
 	@Override
 	public User userRegistration(RegisterDto register) {
-
-		Optional<User> useremail = userRepository.findUserByEmail(register.getEmailAddress());
-
+		Optional<User> useremail = userRepository.findUserByEmail(register.getEmail());
 		if (useremail.isPresent())
 			throw new UserException(208, env.getProperty("103"));
-
 		register.setPassword(encoder.encode(register.getPassword()));
 		User user = new User(register);
 		Mail mail = new Mail();
 		user.setVerified(false);
 		User usr = userRepository.save(user);
 		try {
-			if (usr != null) {
+			if (usr!= null) {
 				mail.setTo(user.getEmail());
 				mail.setSubject(Constants.REGISTRATION_STATUS);
 				mail.setContext("Hi " + user.getName() + " " + Constants.REGISTRATION_MESSAGE
@@ -88,11 +84,9 @@ public class UserServiceImpl implements UserService {
 		}
 		return usr;
 	}
-
 	@Transactional
 	@Override
 	public String loginByEmailOrMobile(LoginDTO login) {
-
 		User user = null;
 		boolean email = Pattern.compile(
 				"^((\"[\\w-\\s]+\")|([\\w-]+(?:\\.[\\w-]+)*)|(\"[\\w-\\s]+\")([\\w-]+(?:\\.[\\w-]+)*))(@((?:[\\w-]+\\.)*\\w[\\w-]{0,66})\\.([a-z]{2,6}(?:\\.[a-z]{2})?)$)|(@\\[?((25[0-5]\\.|2[0-4][0-9]\\.|1[0-9]{2}\\.|[0-9]{1,2}\\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\\]?$)")
@@ -109,7 +103,8 @@ public class UserServiceImpl implements UserService {
 
 				String token = jwt.generateToken(user.getUserId(), Token.WITHOUT_EXPIRE_TIME);
 				return token;
-			}
+			}	
+		}else {
 			throw new UserException(208, env.getProperty("404"));
 		}
 		return null;
@@ -129,22 +124,27 @@ public class UserServiceImpl implements UserService {
 
 		user.setVerified(true);
 		boolean users = userRepository.save(user) != null ? true : false;
-
+		
+        if(!users)
+        	throw new UserException(208, env.getProperty("105"));
+        
 		return users;
 	}
 
 	@Transactional
 	@Override
-	public String forgotpassword(@Valid String emailAddress) {
+	public String forgotpassword(@Valid String email) {
 		Mail mail = new Mail();
-		Optional<User> optionalUser = userRepository.findUserByEmail(emailAddress);
-		return optionalUser.filter(user -> {
-			return user != null;
-		}).map(user -> {
-			mail.setTo(user.getEmail());
+		System.out.println("-------------->"+email);
+		Optional<User> user = userRepository.findByEmail(email);
+		System.out.println(user);
+		return user.filter(seller -> {	
+			return seller != null;
+		}).map(use -> {
+			mail.setTo(use.getEmail());
 			mail.setSubject(Constants.RESET_PASSWORD_LINK);
-			mail.setContext("Hi " + user.getName() + " " + Constants.USER_RESET_PASSWORD_LINK
-					+ Constants.RESET_PASSWORD_LINK + jwt.generateToken(user.getUserId(), Token.WITH_EXPIRE_TIME));
+			mail.setContext("Hi " + use.getName() + " " + Constants.USER_RESET_PASSWORD_LINK
+					+ Constants.USER_RESET_PASSWORD_LINK + jwt.generateToken(use.getUserId(), Token.WITH_EXPIRE_TIME));
 			producer.sendToQueue(mail);
 			consumer.receiveMail(mail);
 			return env.getProperty("403");
@@ -158,6 +158,7 @@ public class UserServiceImpl implements UserService {
 	 * @param token
 	 * @RequestBody forgetPasswordDto
 	 * @Return
+	 * @Return  
 	 */
 	@Transactional
 	@Override

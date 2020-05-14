@@ -1,3 +1,6 @@
+/**
+ * @author Saikiran(Msk)
+ */
 package com.bridgelabz.bookstoreapi.service.impl;
 
 import java.time.LocalDateTime;
@@ -9,11 +12,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+
+import com.bridgelabz.bookstoreapi.dto.CartdetailsDto;
 import com.bridgelabz.bookstoreapi.entity.Book;
 import com.bridgelabz.bookstoreapi.entity.CartDetails;
+import com.bridgelabz.bookstoreapi.entity.Quantity;
 import com.bridgelabz.bookstoreapi.entity.User;
 import com.bridgelabz.bookstoreapi.exception.UserException;
 import com.bridgelabz.bookstoreapi.repository.BookRepository;
+import com.bridgelabz.bookstoreapi.repository.QuantityRepository;
 import com.bridgelabz.bookstoreapi.repository.UserRepository;
 import com.bridgelabz.bookstoreapi.service.CartService;
 import com.bridgelabz.bookstoreapi.utility.JWTUtil;
@@ -32,13 +39,42 @@ public class CartImplementation implements CartService {
 	private BookRepository bookRepository;
 
 	@Autowired
+	private QuantityRepository quantityRepository;
+
+	@Autowired
 	private Environment env;
 
 	@Transactional
 	@Override
+	public List<CartDetails> getBooksfromCart(String token) {
+		Long id = jwt.decodeToken(token);
+
+		User user = userRepository.findUserById(id).orElseThrow(() -> new UserException(401, env.getProperty("104")));
+		List<CartDetails> cartBooks = user.getCartBooks();
+
+		return cartBooks;
+	}
+	
+	@Transactional
+	@Override
+	public int getCountOfBooks(String token) {
+		Long id = jwt.decodeToken(token);
+         int countOfBooks=0;
+		User user = userRepository.findUserById(id).orElseThrow(() -> new UserException(401, env.getProperty("104")));
+		List<CartDetails> cartBooks = user.getCartBooks();
+         for(CartDetails cart:cartBooks) {
+        	 if(!cart.getBooksList().isEmpty()) {
+        		 countOfBooks++;
+        	 }
+         }
+		return countOfBooks;
+	}
+
+	@Transactional
+	@Override
 	public List<CartDetails> addBooksToCart(String token, long bookId) {
-		long id = (Long) jwt.decodeToken(token);
-		long quantity = 1;
+		Long id = jwt.decodeToken(token);
+		
 		User user = userRepository.findUserById(id).orElseThrow(() -> new UserException(401, env.getProperty("104")));
 
 		Book book = bookRepository.findById(bookId).orElseThrow(() -> new UserException(201, env.getProperty("4041")));
@@ -52,99 +88,192 @@ public class CartImplementation implements CartService {
 		/**
 		 * For the first time adding the book the cartList
 		 */
-		CartDetails cart = new CartDetails();
-		ArrayList<Book> booklist = new ArrayList<>();
+		
 		if (books == null) {
-			booklist.add(book);
-			cart.setPlaceTime(LocalDateTime.now());
-			cart.setBooksList(booklist);
-			cart.setQuantityOfBooks(quantity);
-			user.getCartBooks().add(cart);
-			return userRepository.save(user).getCartBooks();
+			User userdetails = this.cartbooks(book,user);
+			return userRepository.save(userdetails).getCartBooks();
 		}
 		/**
 		 * Checking whether book is already present r not
-		 */
+	     */
 		Optional<Book> cartbook = books.stream().filter(t -> t.getBookId() == bookId).findFirst();
 
 		if (cartbook.isPresent()) {
 			throw new UserException(401, env.getProperty("505"));
 		} else {
-			booklist.add(book);
-			cart.setPlaceTime(LocalDateTime.now());
-			cart.setBooksList(booklist);
-			cart.setQuantityOfBooks(quantity);
-			user.getCartBooks().add(cart);
+			User userdetails = this.cartbooks(book,user);
+			return userRepository.save(userdetails).getCartBooks();
 		}
-
-		return userRepository.save(user).getCartBooks();
 
 	}
 
+	
+	public User cartbooks(Book book,User user) {
+		long quantity=1;
+        CartDetails cart = new CartDetails();
+		Quantity qunatityofbook = new Quantity();
+		
+		ArrayList<Book> booklist = new ArrayList<>();
+		ArrayList<Quantity> quantitydetails = new ArrayList<Quantity>();
+		/**
+		 * adding the book details
+		 */
+		booklist.add(book);
+		cart.setPlaceTime(LocalDateTime.now());
+		cart.setBooksList(booklist);
+		/**
+		 * adding the quantity to the book
+		 */
+		qunatityofbook.setQuantityOfBook(quantity);
+		quantitydetails.add(qunatityofbook);
+		cart.setQuantityOfBooks(quantitydetails);
+		/**
+		 * saving the complete cart in user
+		 */
+		user.getCartBooks().add(cart);
+		return user;
+	}
+	
 	@Transactional
 	@Override
-	public List<CartDetails> addBooksQuantityToCart(String token, long bookId, long quantity) {
+	public List<CartDetails> addBooksQuantityInCart(String token, Long bookId, CartdetailsDto bookQuantityDetails) {
 
-		long id = (Long) jwt.decodeToken(token);
+		Long id = jwt.decodeToken(token);
+		Long quantityId = bookQuantityDetails.getQuantityId();
+		Long quantity = bookQuantityDetails.getQuantityOfBook();
 
 		User user = userRepository.findUserById(id).orElseThrow(() -> new UserException(401, env.getProperty("104")));
-
-		user.getCartBooks().forEach((cart) -> {
+		boolean notExist = false;
+		for (CartDetails cartt : user.getCartBooks()) {
 			/**
 			 * checking the number of books available
 			 */
-			boolean notExist = cart.getBooksList().stream()
-					.noneMatch(books -> books.getBookId() == bookId && quantity < books.getNoOfBooks());
+			if(!cartt.getBooksList().isEmpty()) {
+				
+			notExist = cartt.getBooksList().stream()
+					.noneMatch(books -> books.getBookId().equals(bookId) && books.getNoOfBooks() > quantity);
+			
+			ArrayList<Quantity> qt = new ArrayList<Quantity>();
+			if (!notExist) {
 
-			if (notExist) {
-				throw new UserException(401, env.getProperty("506"));
-			} else {
-				cart.setQuantityOfBooks(quantity);
+				for (Quantity qant : cartt.getQuantityOfBooks()) {
+					if (qant.getQuantityId().equals(quantityId)) {
+
+						Quantity qunatityofbook = new Quantity(quantity + 1);
+
+						qt.add(qunatityofbook);
+						cartt.setQuantityOfBooks(qt);
+						return userRepository.save(user).getCartBooks();
+
+					}
+				}
+
 			}
-
-		});
-
-		return userRepository.save(user).getCartBooks();
+		}
+		}
+		if(notExist==false) {
+	    	   throw new UserException(401, env.getProperty("506"));
+	       }
+		return null;
 
 	}
-
+	
 	@Transactional
 	@Override
-	public List<CartDetails> getBooksfromCart(String token) {
-		long id = (Long) jwt.decodeToken(token);
+	public List<CartDetails> descBooksQuantityInCart(String token, Long bookId, CartdetailsDto bookQuantityDetails) {
+
+		Long id = jwt.decodeToken(token);
+		Long quantityId = bookQuantityDetails.getQuantityId();
+		Long quantity = bookQuantityDetails.getQuantityOfBook();
 
 		User user = userRepository.findUserById(id).orElseThrow(() -> new UserException(401, env.getProperty("104")));
-		List<CartDetails> cartBooks = user.getCartBooks();
-		return cartBooks;
+		boolean notExist = false;
+		for (CartDetails cartt : user.getCartBooks()) {
+			/**
+			 * checking the number of books available
+			 */
+			if(!cartt.getBooksList().isEmpty()) {
+				
+			 notExist = cartt.getBooksList().stream()
+					.noneMatch(books -> books.getBookId().equals(bookId));
+			
+			ArrayList<Quantity> qt = new ArrayList<Quantity>();
+			if (!notExist) {
+
+				for (Quantity qant : cartt.getQuantityOfBooks()) {
+					if (qant.getQuantityId().equals(quantityId)) {
+
+						Quantity qunatityofbook = new Quantity(quantity - 1);
+
+						qt.add(qunatityofbook);
+						cartt.setQuantityOfBooks(qt);
+						return userRepository.save(user).getCartBooks();
+
+					}
+				}
+
+			}
+		}
+		}
+       if(notExist==false) {
+    	   throw new UserException(401, env.getProperty("506"));
+       }
+		return null;
+
 	}
 
 	@Transactional
 	@Override
-	public List<CartDetails> removeBooksToCart(String token, long bookId) {
+	public boolean removeBooksToCart(String token, Long bookId) {
 
-		long id = (Long) jwt.decodeToken(token);
+		Long id = jwt.decodeToken(token);
 
 		User user = userRepository.findUserById(id).orElseThrow(() -> new UserException(201, env.getProperty("104")));
 
 		Book book = bookRepository.findById(bookId).orElseThrow(() -> new UserException(201, env.getProperty("104")));
 
-		user.getCartBooks().forEach((books) -> {
-			books.getBooksList().remove(book);
-		});
+		Quantity quantity = quantityRepository.findById(id)
+				.orElseThrow(() -> new UserException(201, env.getProperty("104")));
 
-		return userRepository.save(user).getCartBooks();
+		for (CartDetails cartt : user.getCartBooks()) {
+			/**
+			 * checking the number of books available
+			 */
+			boolean notExist = cartt.getBooksList().stream().noneMatch(books -> books.getBookId().equals(bookId));
+
+			if (!notExist) {
+
+				cartt.getQuantityOfBooks().remove(quantity);
+				cartt.getBooksList().remove(book);
+				cartt.getQuantityOfBooks().clear();
+				boolean users = userRepository.save(user).getCartBooks() != null ? true : false;
+				if (users) {
+					return users;
+				} else {
+					throw new UserException(401, env.getProperty("4041"));
+				}
+
+			}
+		}
+		return false;
 	}
 
 	@Transactional
 	@Override
-	public boolean verifyBookInCart(String token, long bookId) {
+	public boolean verifyBookInCart(String token, Long bookId) {
+		List<CartDetails> bookdetails = this.getBooksfromCart(token);
+		boolean notExist=false;
+		for(CartDetails cart:bookdetails) {
+		     notExist = cart.getBooksList().stream().noneMatch(books -> books.getBookId().equals(bookId));
+			if (!notExist)
+				return true;
+		
+		}
+		if(notExist==false) {
+			throw new UserException(401, env.getProperty("506"));
+		}
 
-		this.getBooksfromCart(token).forEach((cart) -> {
-			boolean notExist = cart.getBooksList().stream().noneMatch(books -> books.getBookId() == bookId);
-			if (notExist)
-				throw new UserException(401, env.getProperty("506"));
-
-		});
-		return true;
+		return false;
 	}
+
 }

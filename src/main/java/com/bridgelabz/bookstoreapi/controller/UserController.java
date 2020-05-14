@@ -25,6 +25,7 @@ import com.bridgelabz.bookstoreapi.dto.RegisterDto;
 import com.bridgelabz.bookstoreapi.dto.sellerForgetPasswordDto;
 import com.bridgelabz.bookstoreapi.entity.OrderDetails;
 import com.bridgelabz.bookstoreapi.entity.User;
+import com.bridgelabz.bookstoreapi.response.Response;
 import com.bridgelabz.bookstoreapi.response.UserResponse;
 import com.bridgelabz.bookstoreapi.service.UserService;
 import io.swagger.annotations.Api;
@@ -32,7 +33,7 @@ import io.swagger.annotations.ApiOperation;
 
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/user")
 @PropertySource("classpath:message.properties")
 @CrossOrigin("*")
 @Api(value="bookStore", description="Operations pertaining to user in Book Store")
@@ -52,15 +53,16 @@ public class UserController {
 
 	@ApiOperation(value = "User Login",response = Iterable.class)
 	@PostMapping(value = "/login")
-	public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody LoginDTO user, BindingResult result) {
-		if (result.hasErrors())
-			return ResponseEntity.status(401)
-					.body(new UserResponse(result.getAllErrors().get(0).getDefaultMessage(), "",HttpStatus.OK));
-		
+	public ResponseEntity<Response> loginUser(@Valid @RequestBody LoginDTO user, BindingResult result) {
+//		if (result.hasErrors())
+//			return ResponseEntity.status(401)
+//					.body(new UserResponse(result.getAllErrors().get(0).getDefaultMessage(), "",HttpStatus.OK));
+//		
 		 String token = userService.loginByEmailOrMobile(user);
 		
-		 return ResponseEntity.status(200)
-					.body(new UserResponse(token, env.getProperty("200"),HttpStatus.OK));
+		 Response response = new Response(HttpStatus.OK.value(),"User loggedin successfully", token);
+			System.out.println("token"+response.getStatus());
+			return new ResponseEntity<>(response, HttpStatus.OK);
 		
 	}
 	
@@ -70,7 +72,7 @@ public class UserController {
 	 */
 
 	@ApiOperation(value = "register",response = Iterable.class)
-	@PostMapping(value = "/add-user")
+	@PostMapping(value = "/registration")
 	public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterDto userRecord, BindingResult result) {
 		if (result.hasErrors())
 			return ResponseEntity.status(401)
@@ -78,7 +80,7 @@ public class UserController {
 		User user = userService.userRegistration(userRecord);
 		if (user != null) {
 			return ResponseEntity.status(200)
-					.body(new UserResponse(env.getProperty("202"), userRecord,HttpStatus.OK));
+					.body(new UserResponse(env.getProperty("200"), userRecord,HttpStatus.OK));
 		}
 		return ResponseEntity.status(401)
 				.body(new UserResponse(env.getProperty("102"),  userRecord,HttpStatus.NOT_FOUND));
@@ -90,7 +92,7 @@ public class UserController {
 	 */
 
 	@ApiOperation(value = "verifing the user",response = Iterable.class)
-	@GetMapping(value = "/registration/verify/{token}")
+	@GetMapping(value = "/verify/{token}")
 	public ResponseEntity<UserResponse> userVerify(@PathVariable("token") String token) throws Exception {
 		
 		boolean verification = userService.updateVerificationStatus(token);
@@ -105,8 +107,8 @@ public class UserController {
 	 * @param RequestParam emailId
 	 */
 	@PostMapping("/forgetPassword")
-	public ResponseEntity<UserResponse> forgetPassword(@Valid @RequestParam String emailAddress) {
-		String message = userService.forgotpassword(emailAddress);
+	public ResponseEntity<UserResponse> forgetPassword(@Valid @RequestParam String email) {
+		String message = userService.forgotpassword(email);
 		return ResponseEntity.status(200)
 				.body(new UserResponse(env.getProperty("107"),message,HttpStatus.OK));
 	}
@@ -118,8 +120,8 @@ public class UserController {
 	 * @param RequestParam newpassword
 	 */
 
-	@PutMapping("/restPassword/{token}")
-	public ResponseEntity<UserResponse> restpassword(@Valid @RequestHeader String token,
+	@PutMapping("/resetPassword/{token}")
+	public ResponseEntity<UserResponse> restpassword(@Valid @PathVariable String token,
 			@RequestBody sellerForgetPasswordDto forgetPasswordDto) {
 		String message = userService.resetpassword(token, forgetPasswordDto);
 		return ResponseEntity.status(200)

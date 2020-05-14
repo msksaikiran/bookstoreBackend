@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,8 +37,8 @@ public class OrderController {
 	private Environment env;
 	
 	@ApiOperation(value = "Getting the confrim order of user")
-	@PutMapping(value = "/getOrderConfrim/{token}")
-	public ResponseEntity<UserResponse> OrderConfrim(@RequestHeader String token) throws Exception {
+	@PutMapping(value = "/confrim/{token}")
+	public ResponseEntity<UserResponse> OrderConfrim(@PathVariable("token") String token) throws Exception {
 		
 		 List<OrderDetails> userdetails = orderService.getOrderConfrim(token);
 			return ResponseEntity.status(200).body(new UserResponse(env.getProperty("700"), userdetails,HttpStatus.OK));
@@ -45,8 +46,8 @@ public class OrderController {
 	}
 	
 	@ApiOperation(value = "Getting the OrderList")
-	@GetMapping(value = "/orderBooks/{token}")
-	public ResponseEntity<UserResponse> getOrderlist(@RequestHeader String token) throws Exception {
+	@GetMapping(value = "/books/{token}")
+	public ResponseEntity<UserResponse> getOrderlist(@PathVariable("token") String token) throws Exception {
 		
 		List<OrderDetails> userdetails = orderService.getOrderList(token);
 			return ResponseEntity.status(200).body(new UserResponse(env.getProperty("700"),userdetails,HttpStatus.OK));

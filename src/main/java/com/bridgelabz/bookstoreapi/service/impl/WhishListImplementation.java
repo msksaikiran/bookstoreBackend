@@ -35,11 +35,11 @@ public class WhishListImplementation implements WhishListService{
 	private Environment env;
 	
 	@Override
-	public User addBooksToWhishList(String token, long bookId) {
-		long id = (Long) jwt.decodeToken(token);
+	public List<Book> addBooksToWhishList(String token, long bookId) {
+		Long id = jwt.decodeToken(token);
 		
 		
-		User user = userRepository.findUserById(id)
+		User user = userRepository.findById(id)
 				.orElseThrow(() -> new UserException(201, env.getProperty("104")));
 		Book book = bookRepository.findById(bookId)
 				.orElseThrow(() -> new UserException(201, env.getProperty("4041")));
@@ -53,7 +53,7 @@ public class WhishListImplementation implements WhishListService{
 		/**
 		 * Checking whether book is already present r not
 		 */
-		Optional<Book> cartbook = user.getWhilistBooks().stream().filter(t -> t.getBookId() == bookId).findFirst();
+		Optional<Book> cartbook = user.getWhilistBooks().stream().filter(t -> t.getBookId()==bookId).findFirst();
 		
 		if(cartbook.isPresent()) {
 			throw new UserException(201, env.getProperty("605"));
@@ -62,11 +62,11 @@ public class WhishListImplementation implements WhishListService{
 		  
 		}
 		
-		return userRepository.save(user);
+		return userRepository.save(user).getWhilistBooks();
 	}
 	
 	@Override
-	public User removeBooksToWhishList(String token, long bookId) {
+	public List<Book> removeBooksToWhishList(String token, long bookId) {
 		
         long id = (Long) jwt.decodeToken(token);
 		
@@ -78,7 +78,7 @@ public class WhishListImplementation implements WhishListService{
 		
 		user.getWhilistBooks().remove(book);
 	
-		return userRepository.save(user);
+		return userRepository.save(user).getWhilistBooks();
 		
 	}
 	
@@ -92,6 +92,14 @@ public class WhishListImplementation implements WhishListService{
 	  	return whishList;
 	}
 	
+	public List<Book> getcountBooksfromWhishList(String token) {
+		long id = (Long) jwt.decodeToken(token);
+		
+		User user = userRepository.findUserById(id)
+				.orElseThrow(() -> new UserException(201, env.getProperty("104")));
+	    List<Book> whishList = user.getWhilistBooks();
+	  	return whishList;
+	}
 
 	
 }

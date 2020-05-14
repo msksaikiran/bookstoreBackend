@@ -3,6 +3,7 @@ package com.bridgelabz.bookstoreapi.controller;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -36,7 +37,8 @@ public class AdminController {
 	private AdminService service;
 	@Autowired
 	private JWTUtil util;
-
+	@Autowired
+	private Environment env;
 	@GetMapping("/")
 	public String welcome() {
 		return "welcome ";
@@ -47,7 +49,7 @@ public class AdminController {
 	 * @param RequestBody register
 	 */
 	@ApiOperation(value = "Admin Registerartion",response = Iterable.class)
-	@PostMapping("/register")
+	@PostMapping("/registration")
 	public ResponseEntity<AdminResponse> register(@Valid @RequestBody AdminDto register, BindingResult result) {
 		if (result.hasErrors())
 			return ResponseEntity.status(401)
@@ -55,10 +57,10 @@ public class AdminController {
 		boolean resultStatus = service.register(register);
 		if (resultStatus) {
 			return ResponseEntity.status(HttpStatus.OK)
-					.body(new AdminResponse("registered successfully", 200, resultStatus));
+					.body(new AdminResponse(env.getProperty("800"), 200, resultStatus));
 		}
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-				.body(new AdminResponse("Admin already exist please login", 208, resultStatus));
+				.body(new AdminResponse(env.getProperty("802"), 208, resultStatus));
 	}
 	
 	/**
@@ -70,10 +72,10 @@ public class AdminController {
 	public ResponseEntity<AdminResponse> verifyMail(@PathVariable String token) {
 		boolean resultStatus = service.verifyEmail(token);
 		if (resultStatus) {
-			return ResponseEntity.status(HttpStatus.OK).body(new AdminResponse("verified ", 200, resultStatus));
+			return ResponseEntity.status(HttpStatus.OK).body(new AdminResponse("805", 200, resultStatus));
 		}
 		return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
-				.body(new AdminResponse("your mail is already verified", 208, resultStatus));
+				.body(new AdminResponse(env.getProperty("806"), 208, resultStatus));
 	}
 	
 	/**
@@ -90,7 +92,7 @@ public class AdminController {
 			Admin admin = service.login(adminLoginDto);
 			if (admin != null) {
 				String token=util.generateToken(admin.getAdminId(),Token.WITH_EXPIRE_TIME);
-				return ResponseEntity.status(HttpStatus.OK).body(new AdminResponse("login successful", 200, token));
+				return ResponseEntity.status(HttpStatus.OK).body(new AdminResponse(env.getProperty("801"), 202, token));
 			}
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 					.body(new AdminResponse("Admin name or password is invalid ", 208,""));
@@ -101,29 +103,29 @@ public class AdminController {
 	 * @param RequestParam email
 	 */
 	@ApiOperation(value = "Admin forgot password",response = Iterable.class)
-	@PostMapping("/forgotpassword")
+	@PostMapping("/forgetPassword")
 	public ResponseEntity<AdminResponse> sendLinkToResetPassword(@RequestParam String email) {
 		boolean resultStatus = service.sendLinkForPassword(email);
 		if (resultStatus) {
-			return ResponseEntity.status(HttpStatus.OK).body(new AdminResponse("kindly check your mail", 200, resultStatus));
+			return ResponseEntity.status(HttpStatus.OK).body(new AdminResponse(env.getProperty("403"), 200, resultStatus));
 		}
 		return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
-				.body(new AdminResponse("please enter valid mail ID", 208, resultStatus));
+				.body(new AdminResponse(env.getProperty("806"), 208, resultStatus));
 	}
 	/**
 	 * API for admin to reset password 
 	 * @param RequestBody resetDetails
 	 */
 	@ApiOperation(value = "Admin reset password",response = Iterable.class)
-	@PutMapping("/resetpassword")
-	public ResponseEntity<AdminResponse> resetAdminPassword(@RequestBody AdminPasswordResetDto resetDetails){
-		boolean resultStatus = service.resetAdminPassword(resetDetails);
+	@PutMapping("/resetPassword/{token}")
+	public ResponseEntity<AdminResponse> resetAdminPassword(@RequestBody AdminPasswordResetDto resetDetails,@PathVariable String token){
+		boolean resultStatus = service.resetAdminPassword(resetDetails,token);
 		if (resultStatus) {
 			return ResponseEntity.status(HttpStatus.OK)
-					.body(new AdminResponse("reset password successful", 200, resultStatus));
+					.body(new AdminResponse(env.getProperty("203"), 200, resultStatus));
 		}
 		return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
-				.body(new AdminResponse("Admin not found kindly try again", 208, resultStatus));
+				.body(new AdminResponse(env.getProperty("701"), 208, resultStatus));
 	}
 	/**
 	 * API for verifying book
