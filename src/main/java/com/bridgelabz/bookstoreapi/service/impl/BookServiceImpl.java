@@ -77,6 +77,7 @@ public class BookServiceImpl implements BookService{
 		List<Book> books =  seller.getSellerBooks();
 		boolean notExist = books.stream().noneMatch(bk -> bk.getBookName().equals(bookDTO.getBookName()));
 		if(notExist) {
+			book.setBookVerified(true);
 		seller.getSellerBooks().add(book);
 		bookRepository.save(book);
 		sellerRepository.save(seller);
@@ -154,7 +155,7 @@ public class BookServiceImpl implements BookService{
 	}
 	
 	public List<Book> getBooks(Integer pageNo){
-		Integer start = (pageNo-1)*10;
+		Integer start = (pageNo-1)*8;
 //		bookRepository.findBook(start).forEach(book -> {
 //			Map<String, Object> documentMapper = objectMapper.convertValue(book, Map.class);
 //			IndexRequest indexRequest = new IndexRequest(Constants.INDEX, Constants.TYPE, String.valueOf(book.getBookId()))
@@ -169,17 +170,17 @@ public class BookServiceImpl implements BookService{
 	}
 	
 	public List<Book> getBooksSortedByPriceLow(Integer pageNo){
-		Integer start = (pageNo-1)*10;
+		Integer start = (pageNo-1)*8;
 		return bookRepository.findBookSortedByPriceLow(start);
 	}
 	
 	public List<Book> getBooksSortedByPriceHigh(Integer pageNo){
-		Integer start = (pageNo-1)*10;
+		Integer start = (pageNo-1)*8;
 		return bookRepository.findBookSortedByPriceHigh(start);
 	}
 	
 	public List<Book> getBooksSortedByArrival(Integer pageNo){
-		Integer start = (pageNo-1)*10;
+		Integer start = (pageNo-1)*8;
 		return bookRepository.findBookSortedByArrival(start);
 	}
 	
@@ -228,7 +229,7 @@ public class BookServiceImpl implements BookService{
 	}
 
 	@Override
-	public int getBooksCount() {
+	public Integer getBooksCount() {
 		return bookRepository.findAllBook().size();
 	}
 }

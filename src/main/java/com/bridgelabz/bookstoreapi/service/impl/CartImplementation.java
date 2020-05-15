@@ -136,7 +136,7 @@ public class CartImplementation implements CartService {
 	
 	@Transactional
 	@Override
-	public List<CartDetails> addBooksQuantityInCart(String token, Long bookId, CartdetailsDto bookQuantityDetails) {
+	public CartDetails addBooksQuantityInCart(String token, Long bookId, CartdetailsDto bookQuantityDetails) {
 
 		Long id = jwt.decodeToken(token);
 		Long quantityId = bookQuantityDetails.getQuantityId();
@@ -163,7 +163,9 @@ public class CartImplementation implements CartService {
 
 						qt.add(qunatityofbook);
 						cartt.setQuantityOfBooks(qt);
-						return userRepository.save(user).getCartBooks();
+						userRepository.save(user).getCartBooks();
+						
+						return cartt;
 
 					}
 				}
@@ -180,7 +182,7 @@ public class CartImplementation implements CartService {
 	
 	@Transactional
 	@Override
-	public List<CartDetails> descBooksQuantityInCart(String token, Long bookId, CartdetailsDto bookQuantityDetails) {
+	public CartDetails descBooksQuantityInCart(String token, Long bookId, CartdetailsDto bookQuantityDetails) {
 
 		Long id = jwt.decodeToken(token);
 		Long quantityId = bookQuantityDetails.getQuantityId();
@@ -195,7 +197,7 @@ public class CartImplementation implements CartService {
 			if(!cartt.getBooksList().isEmpty()) {
 				
 			 notExist = cartt.getBooksList().stream()
-					.noneMatch(books -> books.getBookId().equals(bookId));
+					.noneMatch(books -> books.getBookId().equals(bookId) && quantity>1 );
 			
 			ArrayList<Quantity> qt = new ArrayList<Quantity>();
 			if (!notExist) {
@@ -207,8 +209,8 @@ public class CartImplementation implements CartService {
 
 						qt.add(qunatityofbook);
 						cartt.setQuantityOfBooks(qt);
-						return userRepository.save(user).getCartBooks();
-
+					    userRepository.save(user).getCartBooks();
+                         return cartt;
 					}
 				}
 
@@ -247,8 +249,9 @@ public class CartImplementation implements CartService {
 				cartt.getBooksList().remove(book);
 				cartt.getQuantityOfBooks().clear();
 				boolean users = userRepository.save(user).getCartBooks() != null ? true : false;
-				if (users) {
+				if (user!=null) {
 					return users;
+					//return cartt;
 				} else {
 					throw new UserException(401, env.getProperty("4041"));
 				}
