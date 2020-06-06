@@ -74,8 +74,7 @@ public class UserServiceImpl implements UserService {
 			if (usr!= null) {
 				mail.setTo(user.getEmail());
 				mail.setSubject(Constants.REGISTRATION_STATUS);
-				mail.setContext("Hi " + user.getName() + " " + Constants.REGISTRATION_MESSAGE
-						+ Constants.VERIFY_USER__LINK + jwt.generateToken(user.getUserId(), Token.WITH_EXPIRE_TIME));
+				mail.setContext("Hi " + user.getName() + " " + Constants.REGISTRATION_MESSAGE+jwt.generateToken(user.getUserId(), Token.WITH_EXPIRE_TIME));
 				producer.sendToQueue(mail);
 				consumer.receiveMail(mail);
 			}
@@ -187,4 +186,14 @@ public class UserServiceImpl implements UserService {
 		return userdetails;
 	}
 
+	@Transactional
+	@Override
+	public String getUserProfile(String token) {
+
+		Long id = jwt.decodeToken(token);
+		User userdetails = userRepository.findById(id)
+				.orElseThrow(() -> new UserException(400, env.getProperty("104")));
+		
+		return userdetails.getProfile();
+	}
 }

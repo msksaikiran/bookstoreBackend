@@ -41,8 +41,8 @@ public class OrderController {
 	@PostMapping(value = "/confrim/{token}")
 	public ResponseEntity<UserResponse> OrderConfrim(@PathVariable("token") String token) throws Exception {
 		
-		 List<OrderDetails> userdetails = orderService.getOrderConfrim(token);
-			return ResponseEntity.status(200).body(new UserResponse(env.getProperty("700"), userdetails,HttpStatus.OK));
+		 OrderDetails orderdetails = orderService.getOrderConfrim(token);
+			return ResponseEntity.status(200).body(new UserResponse(env.getProperty("700"), orderdetails,HttpStatus.OK));
 		
 	}
 	
@@ -51,8 +51,8 @@ public class OrderController {
 	@GetMapping(value = "/books/{token}")
 	public ResponseEntity<UserResponse> getOrderlist(@PathVariable("token") String token) throws Exception {
 		
-		List<OrderDetails> userdetails = orderService.getOrderList(token);
-			return ResponseEntity.status(200).body(new UserResponse(env.getProperty("700"),userdetails,HttpStatus.OK));
+		List<OrderDetails> orderdetails = orderService.getOrderList(token);
+			return ResponseEntity.status(200).body(new UserResponse(env.getProperty("700"),orderdetails,HttpStatus.OK));
 		
 	}
 	
@@ -61,6 +61,15 @@ public class OrderController {
 	public ResponseEntity<UserResponse> getBooksCount(@PathVariable("token") String token) throws Exception {
 		
 		int userdetails = orderService.getCountOfBooks(token);
+			return ResponseEntity.status(200).body(new UserResponse(env.getProperty("700"),userdetails,HttpStatus.OK));
+		
+	}
+	
+	@ApiOperation(value = "Confrim the book in the orderList")
+	@GetMapping(value = "/books_confrim/{bookId}")
+	public ResponseEntity<UserResponse> getBookConfrim(@RequestHeader(name= "token") String token,@PathVariable("bookId") long bookId) throws Exception {
+		
+		boolean userdetails = orderService.getbookConfrim(token, bookId);
 			return ResponseEntity.status(200).body(new UserResponse(env.getProperty("700"),userdetails,HttpStatus.OK));
 		
 	}

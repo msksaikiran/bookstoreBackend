@@ -9,7 +9,9 @@ public interface OrderService {
 
 	List<OrderDetails> getOrderList(String token);
 
-	List<OrderDetails> getOrderConfrim(String token);
+	OrderDetails getOrderConfrim(String token);
 
 	int getCountOfBooks(String token);
+
+	boolean getbookConfrim(String token, Long bookId);
 }

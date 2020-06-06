@@ -10,15 +10,20 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.GenericGenerator;
 
 import com.bridgelabz.bookstoreapi.dto.BookDTO;
 
+import lombok.ToString;
+
 @Entity
 @Table(name="books")
+@ToString
 public class Book {
 	
 	@Id
@@ -26,22 +31,22 @@ public class Book {
 	@Column(name = "book_id")
 	private Long bookId;
 	
-	@Column(name = "book_name", nullable = false)
+	@Column(name = "bookName", nullable = false)
 	private String bookName;
 	
-	@Column(name = "book_author", nullable = false)
+	@Column(name = "bookAuthor", nullable = false)
 	private String bookAuthor;
 	
-	@Column(name = "book_price", nullable = false)
+	@Column(name = "bookPrice", nullable = false)
 	private Double bookPrice;
 	
-	@Column(name = "no_of_books", nullable = false)
+	@Column(name = "noOfBooks", nullable = false)
 	private Long noOfBooks;
 	
 	@Column(name = "book_image")
 	private String bookImage;
 	
-	@Column(name = "book_description", nullable = false)
+	@Column(name = "bookDescription", nullable = false)
 	private String bookDescription;
 	
 	@Column(name = "book_verified")
@@ -53,8 +58,15 @@ public class Book {
 	@Column(name = "book_updated_time", nullable = false)
 	private LocalDateTime bookUpdatedTime;
 	
-	@OneToMany(cascade = CascadeType.ALL)
-	@JoinColumn(name = "book_id")
+	@Column(name = "book_unapprove",nullable = false)
+	private boolean isBookApproveStatus;
+	
+	@Column(name = "seller_name", nullable = false)
+	private String sellerName;
+	
+	
+	@ManyToMany(cascade = CascadeType.ALL)
+	//@JoinColumn(name = "book_id")
 	private List<ReviewAndRating> reviewRating;
 	
 	public Book(BookDTO dto) {
@@ -71,6 +83,27 @@ public class Book {
 	
 	public Book() {
 		super();
+	}
+
+
+
+	public String getSellerName() {
+		return sellerName;
+	}
+
+
+	public void setSellerName(String sellerName) {
+		this.sellerName = sellerName;
+	}
+
+
+	public boolean isBookApproveStatus() {
+		return isBookApproveStatus;
+	}
+
+
+	public void setBookApproveStatus(boolean isBookApproveStatus) {
+		this.isBookApproveStatus = isBookApproveStatus;
 	}
 
 

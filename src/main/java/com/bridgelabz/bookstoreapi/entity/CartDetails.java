@@ -31,18 +31,16 @@ public class CartDetails {
 	private LocalDateTime placeTime;
 
 	@OneToMany(cascade = CascadeType.ALL, targetEntity = Quantity.class)
-	@Column(name = "bookquantity")
+	@JoinColumn(name = "cartId")
 	private List<Quantity> QuantityOfBooks;
 	
 	@ManyToMany(cascade = CascadeType.ALL)
 	private List<Book> BooksList;
 
 	
-
 	public CartDetails() {
 		super();
 	}
-
 
 
 	public Long getCartId() {
@@ -50,11 +48,9 @@ public class CartDetails {
 	}
 
 
-
 	public void setCartId(Long cartId) {
 		this.cartId = cartId;
 	}
-
 
 
 	public LocalDateTime getPlaceTime() {

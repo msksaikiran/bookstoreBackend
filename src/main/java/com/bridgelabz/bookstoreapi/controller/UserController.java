@@ -19,7 +19,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.bridgelabz.bookstoreapi.dto.LoginDTO;
 import com.bridgelabz.bookstoreapi.dto.RegisterDto;
 import com.bridgelabz.bookstoreapi.dto.sellerForgetPasswordDto;
@@ -27,7 +30,10 @@ import com.bridgelabz.bookstoreapi.entity.OrderDetails;
 import com.bridgelabz.bookstoreapi.entity.User;
 import com.bridgelabz.bookstoreapi.response.Response;
 import com.bridgelabz.bookstoreapi.response.UserResponse;
+import com.bridgelabz.bookstoreapi.service.AwsS3Service;
 import com.bridgelabz.bookstoreapi.service.UserService;
+import com.bridgelabz.bookstoreapi.utility.ImageType;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -45,6 +51,8 @@ public class UserController {
 	@Autowired
 	private Environment env;
 
+	@Autowired
+	private AwsS3Service awsService;
 	
 	/**
 	 * API for user login
@@ -59,18 +67,21 @@ public class UserController {
 //					.body(new UserResponse(result.getAllErrors().get(0).getDefaultMessage(), "",HttpStatus.OK));
 //		
 		 String token = userService.loginByEmailOrMobile(user);
-		
-		 Response response = new Response(HttpStatus.OK.value(),"User loggedin successfully", token);
+		 
+		 if(token!=null)
+		 {
+			Response response = new Response(HttpStatus.OK.value(),"User loggedin successfully", token);
 			System.out.println("token"+response.getStatus());
 			return new ResponseEntity<>(response, HttpStatus.OK);
-		
-	}
+		 }
+		 Response response = new Response(HttpStatus.NOT_FOUND.value(),"User not found");
+		 return new ResponseEntity<>(response, HttpStatus.OK);
+		 }
 	
 	/**
 	 * API for user registeration
 	 * @param RequestBody register
 	 */
-
 	@ApiOperation(value = "register",response = Iterable.class)
 	@PostMapping(value = "/registration")
 	public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterDto userRecord, BindingResult result) {
@@ -90,7 +101,7 @@ public class UserController {
 	 * API for verifying the token User
 	 * @param pathVaraiable token
 	 */
-
+	
 	@ApiOperation(value = "verifing the user",response = Iterable.class)
 	@GetMapping(value = "/registration/verify/{token}")
 	public ResponseEntity<UserResponse> userVerify(@PathVariable("token") String token) throws Exception {
@@ -130,13 +141,27 @@ public class UserController {
 	
 
 	@ApiOperation(value = "getting the user")
-	@GetMapping(value = "/get/{token}")
+	@GetMapping(value = "/get")
 	public ResponseEntity<UserResponse> gettingUser(@RequestHeader String token) throws Exception {
-		
 		User userdetails = userService.getUser(token);
 			return ResponseEntity.status(200).body(new UserResponse(env.getProperty("201"),userdetails,HttpStatus.OK));
 		
 	}
 	
+	@ApiOperation(value = "Upload book image")
+	@PostMapping("/uploaduserimage/{token}")
+    public ResponseEntity<Response> uploadProfile(@RequestPart(value = "file") MultipartFile file,@PathVariable(name = "token") String token)
+    {
+		String imageUrl = awsService.uploadFileForUser(file,token,ImageType.USER);
+        return ResponseEntity.ok().body(new Response(HttpStatus.OK.value(),imageUrl));
+    }
 	
+	@ApiOperation(value = "getting the user")
+	@GetMapping(value = "/profileUrl")
+	public ResponseEntity<UserResponse> gettingUserProfile(@RequestHeader(name="token") String token) throws Exception {
+		
+		String userdetails = userService.getUserProfile(token);
+			return ResponseEntity.status(200).body(new UserResponse(env.getProperty("201"),userdetails,HttpStatus.OK));
+		
+	}
 }
